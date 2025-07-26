@@ -1,0 +1,68 @@
+name: Build PDF Repeat App
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        python-version: [3.9, 3.10, 3.11]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller pdf-repeat.spec
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: pdf-repeat-${{ matrix.os }}-${{ matrix.python-version }}
+        path: dist/
+        retention-days: 30
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Create release assets
+      run: |
+        mkdir -p release-assets
+        for dir in */; do
+          if [ -d "$dir" ]; then
+            cp -r "$dir"/* release-assets/
+          fi
+        done
+        
+    - name: Upload release assets
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-assets
+        path: release-assets/
+        retention-days: 30 
