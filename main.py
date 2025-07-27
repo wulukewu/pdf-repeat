@@ -69,28 +69,37 @@ def save_file():
 def repeat_and_merge_pdfs_single_file(file_paths, repeat_count):
     output = PdfWriter()
     for file_path in file_paths:
+        # Read the file once and store its pages
+        reader = PdfReader(file_path)
+        pages = list(reader.pages)  # Convert to list to ensure proper copying
+        
+        # Repeat the entire file's pages
         for _ in range(repeat_count):
-            reader = PdfReader(file_path)
-            for page_num in range(len(reader.pages)):
-                output.add_page(reader.pages[page_num])
+            for page in pages:
+                output.add_page(page)
     return output
 
 def merge_then_repeat_pdfs(file_paths, repeat_count):
     output = PdfWriter()
+    # First, collect all pages from all files
+    all_pages = []
+    for file_path in file_paths:
+        reader = PdfReader(file_path)
+        pages = list(reader.pages)  # Convert to list to ensure proper copying
+        all_pages.extend(pages)
+    
+    # Then repeat the entire merged collection
     for _ in range(repeat_count):
-        for file_path in file_paths:
-            reader = PdfReader(file_path)
-            for page_num in range(len(reader.pages)):
-                page = reader.pages[page_num]
-                output.add_page(page)
+        for page in all_pages:
+            output.add_page(page)
     return output
 
 def repeat_and_merge_pdfs_by_page(file_paths, repeat_count):
     output = PdfWriter()
     for file_path in file_paths:
         reader = PdfReader(file_path)
-        for page_num in range(len(reader.pages)):
-            page = reader.pages[page_num]
+        pages = list(reader.pages)  # Convert to list to ensure proper copying
+        for page in pages:
             for _ in range(repeat_count):
                 output.add_page(page)
     return output
